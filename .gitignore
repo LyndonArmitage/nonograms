@@ -26,3 +26,5 @@ project/metals.sbt
 
 /.idea/
 *.iml
+
+.bsp/
