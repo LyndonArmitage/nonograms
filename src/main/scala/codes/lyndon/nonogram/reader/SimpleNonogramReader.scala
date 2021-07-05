@@ -1,18 +1,22 @@
 package codes.lyndon.nonogram.reader
-import codes.lyndon.nonogram.{Nonogram, Square}
+import codes.lyndon.nonogram.Grid.GridRow
+import codes.lyndon.nonogram.{Hints, Nonogram, NonogramBuilder, Square}
+import org.slf4j.LoggerFactory
 
-import java.nio.file.{Files, Path}
-import scala.jdk.CollectionConverters.CollectionHasAsScala
+import java.io.InputStream
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 object SimpleNonogramReader extends NonogramReader {
 
-  private val validSections: Set[String] = Section.types.map(_.text)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   private val validGridChars: Set[Char] = Square.charToTypes.keySet ++ Set(' ')
 
-  override def parse(file: Path): Nonogram = {
+  def parse(inputStream: InputStream): Nonogram = {
 
-    val allLines = Files.readAllLines(file).asScala
+    val allLines =
+      scala.io.Source.fromInputStream(inputStream).getLines().toIndexedSeq
 
     // First line must be the dimensions of the Nonogram in the form:
     // [width]x[height]
@@ -42,6 +46,8 @@ object SimpleNonogramReader extends NonogramReader {
       throw NotAValidNonogram("Second line must be blank")
     }
 
+    logger.debug(s"Nonogram has dimensions of: $width x $height")
+
     // Now comes the true complexity, parsing the rest of the format
     parseSections(width, height, allLines.drop(2))
   }
@@ -49,17 +55,108 @@ object SimpleNonogramReader extends NonogramReader {
   private def parseSections(
       width: Int,
       height: Int,
-      lines: Iterable[String]
+      lines: IndexedSeq[String]
   ): Nonogram = {
-    var currentSection: Option[Section] = None
-    ???
+    val sectionBuilder = new SectionBuilder(width, height)
+    var lineNum        = 0
+    while (lineNum < lines.length) {
+      val line = lines(lineNum)
+      if (line.isBlank) {
+        if (sectionBuilder.hasSection) {
+          sectionBuilder.buildSection()
+          sectionBuilder.clearSection()
+        }
+      } else {
+        if (sectionBuilder.hasSection) {
+          sectionBuilder.parseLine(line)
+        } else {
+          sectionBuilder.section = getSectionHeader(line)
+          if (!sectionBuilder.hasSection) {
+            throw NotAValidNonogram(s"$line is not a valid section")
+          }
+        }
+      }
+      lineNum = lineNum + 1
+    }
+
+    sectionBuilder.build()
+  }
+
+  private class SectionBuilder(width: Int, height: Int) {
+    var section: Option[Section]          = None
+    val lines: mutable.ListBuffer[String] = ListBuffer.empty
+
+    private val builder = NonogramBuilder(width, height)
+
+    def hasSection: Boolean = section.isDefined
+
+    def parseLine(line: String): Unit = {
+      section.foreach { sec =>
+        if (sec.validateLine(line)) {
+          lines.addOne(line)
+        } else {
+          throw NotAValidNonogram(s"$line is not a valid line for $sec")
+        }
+      }
+    }
+
+    def buildSection(): Unit = {
+      if (!hasSection) {
+        return
+      }
+      section.foreach {
+        case Title =>
+          builder.setTitle(lines.head)
+        case Author =>
+          builder.setAuthor(lines.head)
+        case Rows =>
+          val hints = lines.map { line =>
+            line.split(',').map(_.toInt).toSeq
+          }
+          builder.setVerticalHints(Hints(hints.toSeq: _*))
+        case Columns =>
+          val hints = lines.map { line =>
+            line.split(',').map(_.toInt).toSeq
+          }
+          builder.setHorizontalHints(Hints(hints.toSeq: _*))
+        case Grid =>
+          val rows: Seq[GridRow] = lines.map { line =>
+            line
+              .split(' ')
+              .map { token =>
+                if (token.length != 1) {
+                  throw NotAValidNonogram(s"$token is not a valid grid token")
+                }
+                token.head
+              }
+              .map(Square.fromChar)
+              .map {
+                case Some(value) => value
+                case c @ None =>
+                  throw NotAValidNonogram(s"$c is not a valud grid token")
+              }
+              .toSeq
+          }.toSeq
+          val grid = codes.lyndon.nonogram.Grid(rows: _*)
+          builder.setGrid(grid)
+        case Solution =>
+          logger.debug("Solution not implemented yet")
+      }
+
+    }
+
+    def build(): Nonogram = {
+      builder.build()
+    }
+
+    def clearSection(): Unit = {
+      section = None
+      lines.clear()
+    }
   }
 
   private def getSectionHeader(line: String): Option[Section] =
     Section.headerMap.get(line)
-
-  private def isValidSectionHeader(line: String): Boolean =
-    validSections.contains(line)
 
   private def isValidGridLine(line: String): Boolean =
     line.forall(validGridChars.contains)
@@ -86,6 +183,7 @@ object SimpleNonogramReader extends NonogramReader {
 
   sealed abstract class Section(val text: String) {
     def validateLine(line: String): Boolean
+    override def toString: String = text
   }
 
   case object Title extends Section("title") {
