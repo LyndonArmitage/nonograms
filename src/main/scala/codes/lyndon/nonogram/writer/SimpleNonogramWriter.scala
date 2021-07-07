@@ -33,7 +33,7 @@ object SimpleNonogramWriter extends NonogramWriter {
           s"${hint.mkString(",")}\n"
         }
         .foreach(writer.write)
-      writer.write("\n\n")
+      writer.write("\n")
 
       writer.write("columns\n")
       nonogram.horizontalHints.hints
@@ -41,16 +41,14 @@ object SimpleNonogramWriter extends NonogramWriter {
           s"${hint.mkString(",")}\n"
         }
         .foreach(writer.write)
-      writer.write("\n\n")
+      writer.write("\n")
 
       writer.write("grid\n")
       writer.write(writeGrid(nonogram.grid))
-      writer.write("\n")
 
       nonogram.solution.foreach { solution =>
         writer.write("\nsolution\n")
         writer.write(writeGrid(solution))
-        writer.write("\n")
       }
 
       writer.flush()
