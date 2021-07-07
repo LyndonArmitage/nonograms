@@ -79,6 +79,10 @@ object SimpleNonogramReader extends NonogramReader {
       lineNum = lineNum + 1
     }
 
+    if (sectionBuilder.hasSection) {
+      sectionBuilder.buildSection()
+      sectionBuilder.clearSection()
+    }
     sectionBuilder.build()
   }
 
@@ -110,39 +114,44 @@ object SimpleNonogramReader extends NonogramReader {
         case Author =>
           builder.setAuthor(lines.head)
         case Rows =>
-          val hints = lines.map { line =>
-            line.split(',').map(_.toInt).toSeq
-          }
-          builder.setVerticalHints(Hints(hints.toSeq: _*))
+          builder.setVerticalHints(parseLinesAsHints())
         case Columns =>
-          val hints = lines.map { line =>
-            line.split(',').map(_.toInt).toSeq
-          }
-          builder.setHorizontalHints(Hints(hints.toSeq: _*))
+          builder.setHorizontalHints(parseLinesAsHints())
         case Grid =>
-          val rows: Seq[GridRow] = lines.map { line =>
-            line
-              .split(' ')
-              .map { token =>
-                if (token.length != 1) {
-                  throw NotAValidNonogram(s"$token is not a valid grid token")
-                }
-                token.head
-              }
-              .map(Square.fromChar)
-              .map {
-                case Some(value) => value
-                case c @ None =>
-                  throw NotAValidNonogram(s"$c is not a valud grid token")
-              }
-              .toSeq
-          }.toSeq
-          val grid = codes.lyndon.nonogram.Grid(rows: _*)
+          val grid = parseLinesAsGrid()
           builder.setGrid(grid)
         case Solution =>
-          logger.debug("Solution not implemented yet")
+          val grid = parseLinesAsGrid()
+          builder.setSolution(grid)
       }
+    }
 
+    private def parseLinesAsGrid(): codes.lyndon.nonogram.Grid = {
+      val rows: Seq[GridRow] = lines.map { line =>
+        line
+          .split(' ')
+          .map { token =>
+            if (token.length != 1) {
+              throw NotAValidNonogram(s"$token is not a valid grid token")
+            }
+            token.head
+          }
+          .map(Square.fromChar)
+          .map {
+            case Some(value) => value
+            case c @ None =>
+              throw NotAValidNonogram(s"$c is not a valud grid token")
+          }
+          .toSeq
+      }.toSeq
+      codes.lyndon.nonogram.Grid(rows: _*)
+    }
+
+    private def parseLinesAsHints(): Hints = {
+      val hints = lines.map { line =>
+        line.split(',').map(_.toInt).toSeq
+      }
+      Hints(hints.toSeq: _*)
     }
 
     def build(): Nonogram = {

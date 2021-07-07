@@ -8,7 +8,10 @@ class NonogramTest extends AnyFunSuite {
     val nonogram = Nonogram(
       NonogramTestExamples.exampleGrid,
       NonogramTestExamples.exampleHorzHints,
-      NonogramTestExamples.exampleVertHints
+      NonogramTestExamples.exampleVertHints,
+      title = "Wikipedia P Nonogram",
+      author = "Unknown",
+      solution = Some(NonogramTestExamples.exampleSolution)
     )
 
     val printed = nonogram.pretty()

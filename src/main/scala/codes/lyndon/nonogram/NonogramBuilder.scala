@@ -16,6 +16,7 @@ final case class NonogramBuilder(
   private var grid: Option[Grid]             = None
   private var horizontalHints: Option[Hints] = None
   private var verticalHints: Option[Hints]   = None
+  private var solution: Option[Grid]   = None
 
   def setTitle(title: String): Unit = this.title = title
 
@@ -26,6 +27,8 @@ final case class NonogramBuilder(
   def setHorizontalHints(hints: Hints): Unit = horizontalHints = Some(hints)
 
   def setVerticalHints(hints: Hints): Unit = verticalHints = Some(hints)
+
+  def setSolution(solution: Grid): Unit = this.solution = Some(solution)
 
   def build(): Nonogram = {
 
@@ -41,6 +44,6 @@ final case class NonogramBuilder(
       case None        => throw CouldNotBuildNonogram("No verticalHints supplied")
     }
 
-    Nonogram(grid, horizontalHints, verticalHints)
+    Nonogram(grid, horizontalHints, verticalHints, title, author, solution)
   }
 }

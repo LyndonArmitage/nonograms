@@ -1,44 +1,15 @@
 package codes.lyndon.nonogram
 
+import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+
 object NonogramTestExamples {
 
   val exampleExpected: String =
-    """|column hints:
-       |0
-       |9
-       |9
-       |2,2
-       |2,2
-       |4
-       |4
-       |0
-       |row hints:
-       |0
-       |4
-       |6
-       |2,2
-       |2,2
-       |6
-       |4
-       |2
-       |2
-       |2
-       |0
-       |grid:
-       |. . . . . . . .
-       |. # # # # . . .
-       |. # # # # # # .
-       |. # # . . # # .
-       |. # # . . # # .
-       |. # # # # # # .
-       |. # # # # . . .
-       |. # # . . . . .
-       |. # # . . . . .
-       |. # # . . . . .
-       |. . . . . . . .
-""".stripMargin
+    Files.readString(new File(getClass.getResource("/expected.test.output").toURI).toPath, StandardCharsets.UTF_8)
 
-  val exampleGrid: Grid = Grid(
+  val exampleSolution: Grid = Grid(
     Grid.emptyGridRow(8),
     Grid.rowFromString(".####..."),
     Grid.rowFromString(".######."),
@@ -51,6 +22,21 @@ object NonogramTestExamples {
     Grid.rowFromString(".##....."),
     Grid.emptyGridRow(8)
   )
+
+  val exampleGrid: Grid = Grid(
+    Grid.rowFromString("XXXXXXXX"),
+    Grid.rowFromString(".#......"),
+    Grid.rowFromString(".#.##..."),
+    Grid.rowFromString("........"),
+    Grid.rowFromString("X...X..."),
+    Grid.rowFromString(".......X"),
+    Grid.rowFromString("........"),
+    Grid.rowFromString("...XX..."),
+    Grid.rowFromString(".......X"),
+    Grid.rowFromString("..#....."),
+    Grid.rowFromString("XX...X.."),
+  )
+
 
   val exampleHorzHints: Hints = Hints(
     Seq(0),
