@@ -14,7 +14,7 @@ trait NonogramWriter {
   def write(nonogram: Nonogram, file: File): Try[Unit] =
     Using(new FileOutputStream(file)) {
       write(nonogram, _)
-    }
+    }.flatten
 
   def write(nonogram: Nonogram, outputStream: OutputStream): Try[Unit]
 }

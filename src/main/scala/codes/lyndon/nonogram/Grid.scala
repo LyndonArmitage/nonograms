@@ -50,4 +50,6 @@ final case class Grid(
   }
 
   override def toString: String = pretty()
+
+  def apply(x: Int)(y: Int) : Square = rows(y)(x)
 }
