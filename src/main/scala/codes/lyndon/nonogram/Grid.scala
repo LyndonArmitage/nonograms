@@ -52,4 +52,6 @@ final case class Grid(
   override def toString: String = pretty()
 
   def apply(x: Int)(y: Int) : Square = rows(y)(x)
+
+  def opt(x: Int)(y: Int): Option[Square] = rows.lift(y).flatMap(_.lift(x))
 }
