@@ -13,6 +13,8 @@ final case class Hints(
 
   def pretty(): String = hints.map(hint => hint.mkString(",")).mkString("\n")
 
+  def apply(n: Int): Hint = productElement(n)
+
   override def productElement(n: Int): Hint = hints(n)
 
   override def productIterator: Iterator[Hint] = hints.iterator
