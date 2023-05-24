@@ -18,7 +18,7 @@ object MutableGrid {
     val grid = apply(solution.width, solution.height)
     for (y <- 0 until solution.height) {
       for (x <- 0 until solution.width) {
-        grid(x)(y) = solution(x)(y)
+        grid.set(x)(y)(solution(x)(y))
       }
     }
 
@@ -33,10 +33,16 @@ trait MutableGrid {
   def height: Int
   def size: Int = width * height
 
-  def apply(x: Int)(y: Int): Square
+  def getRow(y: Int): Array[Square]
+  def getColumn(x: Int): Array[Square]
+
+  def apply(x: Int)(y: Int): Square = get(x)(y)
+  def get(x: Int)(y: Int): Square
   def set(x: Int)(y: Int)(value: Square): Unit
   def setRow(y: Int)(value: Square): Unit
+  def setRowValues(y: Int)(values: Array[Square]): Unit
   def setColumn(x: Int)(value: Square): Unit
+  def setColumnValues(x: Int)(values: Array[Square]): Unit
 
   def countOf(value: Square): Int
 
@@ -50,10 +56,10 @@ private class MutableGridImpl(
 
   private val grid: Array[Array[Square]] = new Array(height)
   for (y <- 0 until height) {
-    grid(y) = Array.fill(width) { Blank}
+    grid(y) = Array.fill(width) { Blank }
   }
 
-  override def apply(x: Int)(y: Int): Square = grid(y)(x)
+  override def get(x: Int)(y: Int): Square = grid(y)(x)
 
   override def set(x: Int)(y: Int)(value: Square): Unit = grid(y)(x) = value
 
@@ -80,5 +86,27 @@ private class MutableGridImpl(
       count += rows.count(_ == value)
     }
     count
+  }
+
+  override def setRowValues(y: Int)(values: Array[Square]): Unit = {
+    grid(y) = values.clone()
+  }
+
+  override def setColumnValues(x: Int)(values: Array[Square]): Unit = {
+    for (y <- values.indices) {
+      val value = values(y)
+      set(x)(y)(value)
+    }
+  }
+
+  override def getRow(y: Int): Array[Square] =
+    grid(y).clone()
+
+  override def getColumn(x: Int): Array[Square] = {
+    val column = Array.fill[Square](height)(Blank)
+    for (y <- 0 until height) {
+      column(y) = grid(y)(x)
+    }
+    column
   }
 }

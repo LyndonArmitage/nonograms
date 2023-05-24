@@ -1,5 +1,5 @@
 package codes.lyndon.nonogram.solver
-import codes.lyndon.nonogram.{Blank, Crossed, Grid, Nonogram, Occupied, Square}
+import codes.lyndon.nonogram._
 import org.slf4j.{Logger, LoggerFactory}
 
 object LogicSolver extends NonogramSolver {
@@ -8,8 +8,16 @@ object LogicSolver extends NonogramSolver {
 
   override def solve(puzzle: Nonogram): Option[Grid] = {
     puzzle.solution match {
-      case x: Some[Grid] => x
-      case None          => Some(attemptSolve(puzzle).toGrid)
+      case Some(solution) =>
+        val mutable = MutableGrid(solution)
+        if (mutable.countOf(Blank) == 0) {
+          logger.warn("Using existing solution")
+          Some(solution)
+        } else {
+          logger.warn("Existing solution is incomplete, will solve")
+          Some(attemptSolve(puzzle).toGrid)
+        }
+      case None => Some(attemptSolve(puzzle).toGrid)
     }
   }
 
@@ -28,6 +36,7 @@ object LogicSolver extends NonogramSolver {
     solveCombos(nonogram, grid)
 
     // TODO: Solve missing parts
+    // This could be groups or runs that can now be solved
 
     val blanks = grid.countOf(Blank)
     if (blanks > 0) {
@@ -124,7 +133,7 @@ object LogicSolver extends NonogramSolver {
             count -= 1
           }
           if (count > blanksOnEitherSide) {
-            grid(x)(y) = Occupied
+            grid.set(x)(y)(Occupied)
           }
         }
       }
@@ -143,7 +152,7 @@ object LogicSolver extends NonogramSolver {
             count -= 1
           }
           if (count > blanksOnEitherSide) {
-            grid(x)(y) = Occupied
+            grid.set(x)(y)(Occupied)
           }
         }
       }
@@ -161,7 +170,53 @@ object LogicSolver extends NonogramSolver {
     // For example:
     // On a length 10 the hints 3,2,3 can only be produced like so:
     // ###X##X###
-    // TODO
+
+    val width  = grid.width
+    val height = grid.height
+
+    for (y <- 0 until height) {
+      val hints = nonogram.verticalHints(y)
+      if (hints.size > 1) {
+        val array: Array[Square] = Array.fill(width)(Blank)
+        var i                    = 0
+        for (hint <- hints) {
+          for (n <- 0 until hint) {
+            array(i + n) = Occupied
+          }
+          i += hint
+          if (i + 1 < width) {
+            array(i + 1) = Crossed
+            i += 1
+          }
+        }
+        if (!hints.contains(Blank)) {
+          // fully populated
+          grid.setRowValues(y)(array)
+        }
+      }
+    }
+
+    for (x <- 0 until width) {
+      val hints = nonogram.horizontalHints(x)
+      if (hints.size > 1) {
+        val array: Array[Square] = Array.fill(width)(Blank)
+        var i                    = 0
+        for (hint <- hints) {
+          for (n <- 0 until hint) {
+            array(i + n) = Occupied
+          }
+          i += hint
+          if (i + 1 < width) {
+            array(i + 1) = Crossed
+            i += 1
+          }
+        }
+        if (!hints.contains(Blank)) {
+          // fully populated
+          grid.setColumnValues(x)(array)
+        }
+      }
+    }
   }
 
 }
