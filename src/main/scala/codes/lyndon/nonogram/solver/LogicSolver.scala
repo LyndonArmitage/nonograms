@@ -1,4 +1,5 @@
 package codes.lyndon.nonogram.solver
+import codes.lyndon.nonogram.Hints.Hint
 import codes.lyndon.nonogram._
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -21,7 +22,7 @@ object LogicSolver extends NonogramSolver {
     }
   }
 
-  private def attemptSolve(nonogram: Nonogram): MutableGrid = {
+  def attemptSolve(nonogram: Nonogram): MutableGrid = {
     val grid = MutableGrid(nonogram)
 
     // Use players intuition to solve the low hanging fruit
@@ -48,43 +49,47 @@ object LogicSolver extends NonogramSolver {
     grid
   }
 
-  private def solveFullLengths(
+  def solveFullLengths(
       nonogram: Nonogram,
       grid: MutableGrid
   ): Unit = {
     val width  = grid.width
     val height = grid.height
     for (y <- 0 until height) {
-      val hints = nonogram.verticalHints(y)
-      if (hints.size == 1) {
-        val hint = hints.head
-        if (hint == width) {
-          // full length occupied
-          grid.setRow(y)(Occupied)
-        } else if (hint == 0) {
-          // full length empty
-          grid.setRow(y)(Crossed)
+      if (nonogram.verticalHints.has(y)) {
+        val hints: Hint = nonogram.verticalHints.get(y)
+        if (hints.size == 1) {
+          val hint = hints.head
+          if (hint == width) {
+            // full length occupied
+            grid.setRow(y)(Occupied)
+          } else if (hint == 0) {
+            // full length empty
+            grid.setRow(y)(Crossed)
+          }
         }
       }
     }
 
     for (x <- 0 until width) {
-      val hints = nonogram.horizontalHints(x)
-      if (hints.size == 1) {
-        val hint = hints.head
-        if (hint == width) {
-          // full length occupied
-          grid.setColumn(x)(Occupied)
-        } else if (hint == 0) {
-          // full length empty
-          grid.setColumn(x)(Crossed)
+      if (nonogram.horizontalHints.has(x)) {
+        val hints = nonogram.horizontalHints(x)
+        if (hints.size == 1) {
+          val hint = hints.head
+          if (hint == width) {
+            // full length occupied
+            grid.setColumn(x)(Occupied)
+          } else if (hint == 0) {
+            // full length empty
+            grid.setColumn(x)(Crossed)
+          }
         }
       }
 
     }
   }
 
-  private def solveMustBeOccupied(
+  def solveMustBeOccupied(
       nonogram: Nonogram,
       grid: MutableGrid
   ): Unit = {
@@ -121,38 +126,42 @@ object LogicSolver extends NonogramSolver {
     val height = grid.height
 
     for (y <- 0 until height) {
-      val hints   = nonogram.verticalHints(y)
-      val halfLen = width / 2.0f
-      hints.find { hint => hint > halfLen }.foreach { hint =>
-        val blanksOnEitherSide = width - hint
-        var count              = 0
-        for (x <- 0 until width) {
-          if (x < halfLen) {
-            count += 1
-          } else if (x > halfLen) {
-            count -= 1
-          }
-          if (count > blanksOnEitherSide) {
-            grid.set(x)(y)(Occupied)
+      if (nonogram.verticalHints.has(y)) {
+        val hints   = nonogram.verticalHints(y)
+        val halfLen = width / 2.0f
+        hints.find { hint => hint > halfLen }.foreach { hint =>
+          val blanksOnEitherSide = width - hint
+          var count              = 0
+          for (x <- 0 until width) {
+            if (x < halfLen) {
+              count += 1
+            } else if (x > halfLen) {
+              count -= 1
+            }
+            if (count > blanksOnEitherSide) {
+              grid.set(x)(y)(Occupied)
+            }
           }
         }
       }
     }
 
     for (x <- 0 until width) {
-      val hints   = nonogram.horizontalHints(x)
-      val halfLen = height / 2.0f
-      hints.find { hint => hint > halfLen }.foreach { hint =>
-        val blanksOnEitherSide = width - hint
-        var count              = 0
-        for (y <- 0 until width) {
-          if (y < halfLen) {
-            count += 1
-          } else if (y > halfLen) {
-            count -= 1
-          }
-          if (count > blanksOnEitherSide) {
-            grid.set(x)(y)(Occupied)
+      if (nonogram.horizontalHints.has(x)) {
+        val hints   = nonogram.horizontalHints(x)
+        val halfLen = height / 2.0f
+        hints.find { hint => hint > halfLen }.foreach { hint =>
+          val blanksOnEitherSide = width - hint
+          var count              = 0
+          for (y <- 0 until width) {
+            if (y < halfLen) {
+              count += 1
+            } else if (y > halfLen) {
+              count -= 1
+            }
+            if (count > blanksOnEitherSide) {
+              grid.set(x)(y)(Occupied)
+            }
           }
         }
       }
@@ -161,7 +170,7 @@ object LogicSolver extends NonogramSolver {
 
   }
 
-  private def solveCombos(
+  def solveCombos(
       nonogram: Nonogram,
       grid: MutableGrid
   ): Unit = {

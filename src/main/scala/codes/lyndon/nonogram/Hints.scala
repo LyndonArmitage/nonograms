@@ -13,9 +13,18 @@ final case class Hints(
 
   def pretty(): String = hints.map(hint => hint.mkString(",")).mkString("\n")
 
+  def isEmpty: Boolean = hints.isEmpty
+
+  def has(n: Int): Boolean = n < hints.size
+
   def apply(n: Int): Hint = productElement(n)
 
-  override def productElement(n: Int): Hint = hints(n)
+  def get(n: Int): Hint = apply(n)
+
+  override def productElement(n: Int): Hint = {
+    if (isEmpty) throw new IndexOutOfBoundsException(n)
+    hints(n)
+  }
 
   override def productIterator: Iterator[Hint] = hints.iterator
 
