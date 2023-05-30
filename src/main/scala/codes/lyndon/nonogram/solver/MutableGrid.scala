@@ -44,6 +44,8 @@ trait MutableGrid {
   def setColumn(x: Int)(value: Square): Unit
   def setColumnValues(x: Int)(values: Array[Square]): Unit
 
+  def fill(value: Square): Unit
+
   def countOf(value: Square): Int
 
   def toGrid: Grid
@@ -99,6 +101,13 @@ private class MutableGridImpl(
     }
   }
 
+  override def fill(value: Square): Unit = {
+    for (y <- 0 until height) {
+      val values = Array.fill[Square](width)(value)
+      setRowValues(y)(values)
+    }
+  }
+
   override def getRow(y: Int): Array[Square] =
     grid(y).clone()
 
@@ -109,4 +118,23 @@ private class MutableGridImpl(
     }
     column
   }
+
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[MutableGridImpl]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: MutableGridImpl =>
+      (that canEqual this) &&
+        (grid sameElements that.grid) &&
+        width == that.width &&
+        height == that.height
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(grid, width, height)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = toGrid.toString
 }

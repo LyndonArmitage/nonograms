@@ -1,6 +1,9 @@
 package codes.lyndon.nonogram
 
 import codes.lyndon.nonogram.Grid.GridRow
+import codes.lyndon.nonogram.solver.MutableGrid
+
+import scala.collection.mutable
 
 object Grid {
   type GridRow = Seq[Square]
@@ -24,6 +27,41 @@ object Grid {
     val row  = emptyGridRow(width)
     val rows = Seq.fill[GridRow](height)(row)
     Grid(rows: _*)
+  }
+
+  def builder(width: Int, height: Int): Builder = new Builder(width, height)
+
+  class Builder(val width: Int, val height: Int) {
+
+    private val rows: Array[mutable.Buffer[Square]] =
+      Array.fill(height)(mutable.Buffer.fill(width)(Blank))
+
+    def build(): Grid = Grid(rows.map(_.toSeq):_*)
+
+    def setRow(y: Int)(value: GridRow): Builder = {
+      rows(y) = mutable.Buffer.from(value)
+      this
+    }
+
+    def setRow(y: Int)(value: mutable.Buffer[Square]): Builder = {
+      rows(y) = value.clone()
+      this
+    }
+
+    def set(x: Int)(y: Int)(value: Square): Builder = {
+      val row = rows(y)
+      row(x) = value
+      this
+    }
+
+    def fill(value: Square): Builder = {
+      for(y <- 0 until height) {
+        rows(y) = mutable.Buffer.fill(width)(value)
+      }
+      this
+    }
+
+    override def toString: String = build().toString
   }
 
 }
@@ -54,4 +92,6 @@ final case class Grid(
   def apply(x: Int)(y: Int) : Square = rows(y)(x)
 
   def opt(x: Int)(y: Int): Option[Square] = rows.lift(y).flatMap(_.lift(x))
+
+  def toMutableGrid: MutableGrid = MutableGrid(this)
 }
